@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+
+function showWelcome {
+cat <<Welcome-message
+
+##    ## #### ######## #### 
+###   ##  ##  ##        ##  
+####  ##  ##  ##        ##  
+## ## ##  ##  ######    ##  
+##  ####  ##  ##        ##  
+##   ###  ##  ##        ##  
+##    ## #### ##       #### 
+
+This is the standard Nifi Developer build environment.
+This has all the right tools installed required to build
+Nifi from source.
+
+Welcome-message
+}
+
+# -------------------------------------------------------
+
+function showAbort {
+  cat <<Abort-message
+
+  ___  _                _   _
+ / _ \\| |              | | (_)
+/ /_\\ \\ |__   ___  _ __| |_ _ _ __   __ _
+|  _  | '_ \\ / _ \\| '__| __| | '_ \\ / _\` |
+| | | | |_) | (_) | |  | |_| | | | | (_| |
+\\_| |_/_.__/ \\___/|_|   \\__|_|_| |_|\\__, |
+                                     __/ |
+                                    |___/
+
+Abort-message
+}
+
+# -------------------------------------------------------
+
+function failIfUserIsRoot {
+    if [ "$(id -u)" -eq "0" ]; # If you are root then something went wrong.
+    then
+        cat <<End-of-message
+
+Apparently you are inside this docker container as the user root.
+Putting it simply:
+
+   This should not occur.
+
+Known possible causes of this are:
+1) Running this script as the root user ( Just don't )
+2) Running an old docker version ( upgrade to 1.4.1 or higher )
+
+End-of-message
+
+    showAbort
+
+    logout
+
+    fi
+}
+
+# -------------------------------------------------------
+
+function warnIfLowMemory {
+    MINIMAL_MEMORY=2046755
+    INSTALLED_MEMORY=$(grep -F MemTotal /proc/meminfo | awk '{print $2}')
+    if [[ $((INSTALLED_MEMORY)) -lt $((MINIMAL_MEMORY)) ]]; then
+        cat <<End-of-message
+
+ _                    ___  ___
+| |                   |  \\/  |
+| |     _____      __ | .  . | ___ _ __ ___   ___  _ __ _   _
+| |    / _ \\ \\ /\\ / / | |\\/| |/ _ \\ '_ \` _ \\ / _ \\| '__| | | |
+| |___| (_) \\ V  V /  | |  | |  __/ | | | | | (_) | |  | |_| |
+\\_____/\\___/ \\_/\\_/   \\_|  |_/\\___|_| |_| |_|\\___/|_|   \\__, |
+                                                         __/ |
+                                                        |___/
+
+Your system is running on very little memory.
+This means it may work but it wil most likely be slower than needed.
+
+If you are running this via boot2docker you can simply increase
+the available memory to at least ${MINIMAL_MEMORY}KiB
+(you have ${INSTALLED_MEMORY}KiB )
+
+End-of-message
+    fi
+}
+
+# -------------------------------------------------------
+function ActivateMaven {
+    export PATH=/usr/lib/apache-maven-3.6.3/bin:$PATH
+    export JAVA_HOME=/usr/lib/jvm/jre-1.8.0-openjdk
+    Answerbuild
+}
+
+function Answerbuild {
+  read -p "Do you want build nifi ? [y/n]" -n 1 -r
+  echo   
+  if [[ $REPLY =~ ^[Yy]$ ]]
+  then
+    mvn clean install package   
+  fi
+}
+# -------------------------------------------------------
+showWelcome
+warnIfLowMemory
+failIfUserIsRoot
+ActivateMaven
+# -------------------------------------------------------
+
