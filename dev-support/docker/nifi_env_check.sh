@@ -1,3 +1,9 @@
+# start-build-env.sh
+# 13/05/2022
+# Apache-2.0
+# © 2022 – LINAGORA
+# @ RLeonard <rleonard@linagora.com>
+
 #!/usr/bin/env bash
 
 function showWelcome {
